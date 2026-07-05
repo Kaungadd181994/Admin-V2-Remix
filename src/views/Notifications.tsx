@@ -8,8 +8,7 @@ export default function Notifications() {
   return (
     <div className="space-y-4">
       <div className="view-head">
-        <h1 className="font-heading font-bold text-[19px] m-0 mb-1">Notifications</h1>
-        <p className="m-0 text-text-dim text-[12.5px] max-w-[640px]">Recent system events and templates sent across Email, SMS, Push and Portal channels.</p>
+        <h1 className="font-heading font-bold text-[19px] m-0">Notifications</h1>
       </div>
 
       <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-sm">

@@ -282,8 +282,7 @@ export default function Ledger() {
     <div className="space-y-4">
       <div className="view-head flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading font-bold text-[19px] m-0 mb-1">General Ledger &amp; Chart of Accounts</h1>
-          <div className="text-xs text-slate-500 font-medium">Real-time dual-aspect accounting registers reflecting multi-tenant escrow ledger controls and automatic fee allocation.</div>
+          <h1 className="font-heading font-bold text-[19px] m-0">General Ledger &amp; Chart of Accounts</h1>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="default" onClick={() => setAddAccountOpen(true)}>

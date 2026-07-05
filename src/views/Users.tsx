@@ -34,8 +34,7 @@ export default function Users() {
     <div className="space-y-4">
       <div className="flex items-end justify-between gap-4 flex-wrap mb-4">
         <div>
-          <h1 className="font-heading font-bold text-[19px] m-0 mb-1">User Management</h1>
-          <p className="m-0 text-text-dim text-[12.5px] max-w-[640px]">Internal platform users: Admin, Risk, Finance and Operations, each scoped by role.</p>
+          <h1 className="font-heading font-bold text-[19px] m-0">User Management</h1>
         </div>
         <div className="flex gap-2 shrink-0">
           <Button variant="primary" onClick={handleAddUser}>+ Add User</Button>

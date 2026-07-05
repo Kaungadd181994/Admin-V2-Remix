@@ -182,8 +182,7 @@ export default function Employees({ params }: { params?: { employeeId?: string }
     <div className="space-y-4">
       <div className="flex items-end justify-between gap-4 flex-wrap mb-4">
         <div>
-          <h1 className="font-heading font-bold text-[19px] m-0 mb-1">Employees</h1>
-          <p className="m-0 text-text-dim text-[12.5px] max-w-[640px]">Two verification states: Employment Verify (linking to a roster) and EWA Verify (trusted whitelist). Self-requested employees not on the uploaded roster need HR/Admin action.</p>
+          <h1 className="font-heading font-bold text-[19px] m-0">Employees</h1>
         </div>
         <div className="flex gap-2 shrink-0">
           <Button>⤓ Download Template</Button>

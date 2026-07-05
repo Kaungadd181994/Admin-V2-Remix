@@ -372,8 +372,7 @@ export default function Companies({ params }: { params?: { companyId?: string } 
     <div className="space-y-4">
       <div className="flex items-end justify-between gap-4 flex-wrap mb-4">
         <div>
-          <h1 className="font-heading font-bold text-[19px] m-0 mb-1">Companies</h1>
-          <p className="m-0 text-text-dim text-[12.5px] max-w-[640px]">Corporate credit pool, onboarding pipeline and policy configuration. Maker: Risk Officer sets terms · Checker: Finance approves budget.</p>
+          <h1 className="font-heading font-bold text-[19px] m-0">Companies</h1>
         </div>
         <div className="flex gap-2 shrink-0">
           <Button variant="primary" onClick={() => setOnboardOpen(true)}>+ Start Onboarding</Button>

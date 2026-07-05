@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DataProvider, useData } from './context/DataContext';
 import { Toaster } from './components/Toaster';
-import { LayoutDashboard, Building2, Users, ArrowRightLeft, ScrollText, ShieldAlert, Bell, FileEdit, History, UserCog, Beaker, Settings2, ChevronDown, ChevronRight, Menu } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, ArrowRightLeft, ScrollText, ShieldAlert, Bell, FileEdit, History, UserCog, Beaker, Settings2, ChevronDown, ChevronRight, Menu, MoreVertical, Coins } from 'lucide-react';
 import Dashboard from './views/Dashboard';
 import Companies from './views/Companies';
 import Employees from './views/Employees';
@@ -14,6 +14,7 @@ import Audit from './views/Audit';
 import UsersView from './views/Users';
 import Research from './views/Research';
 import ConfigSystem from './views/ConfigSystem';
+import Repayments from './views/Repayments';
 import { fmt } from './types';
 import { INITIAL_DATA } from './types';
 
@@ -23,6 +24,8 @@ function Shell() {
   const [pulseTime, setPulseTime] = useState('just now');
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isTabMenuOpen, setIsTabMenuOpen] = useState(false);
+  const [tabIdToConfirmClose, setTabIdToConfirmClose] = useState<string | null>(null);
 
   useEffect(() => {
     if (tabs.length === 0) {
@@ -67,6 +70,7 @@ function Shell() {
       group: 'Money Movement',
       items: [
         { key: 'transactions', label: 'Transactions', icon: <ArrowRightLeft size={14} /> },
+        { key: 'repayments', label: 'Repayments', icon: <Coins size={14} /> },
         { key: 'ledger', label: 'Ledger & COA', icon: <ScrollText size={14} /> },
         { key: 'risk', label: 'Risk Exposure', icon: <ShieldAlert size={14} /> }
       ]
@@ -94,6 +98,7 @@ function Shell() {
     companies: Companies,
     employees: Employees,
     transactions: Transactions,
+    repayments: Repayments,
     ledger: Ledger,
     risk: Risk,
     research: Research,
@@ -109,6 +114,7 @@ function Shell() {
     companies: 'Companies',
     employees: 'Employees',
     transactions: 'Transactions',
+    repayments: 'Repayments & Settlements',
     ledger: 'Ledger & Chart of Accounts',
     risk: 'Risk Exposure',
     research: 'Research & Tasks',
@@ -251,9 +257,9 @@ function Shell() {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      closeTab(t.id);
+                      setTabIdToConfirmClose(t.id);
                     }}
-                    className="opacity-40 group-hover:opacity-100 hover:bg-slate-200 hover:text-slate-800 rounded p-0.5 text-[9px] font-bold"
+                    className="opacity-40 group-hover:opacity-100 hover:bg-slate-700 hover:text-white rounded p-0.5 text-[9px] font-bold"
                     title="Close tab"
                   >
                     ✕
@@ -262,15 +268,51 @@ function Shell() {
               );
             })}
           </div>
-          <div className="flex items-center gap-2">
+          
+          {/* Workspace Tab Action Dropdown (3-dots) */}
+          <div className="relative flex items-center shrink-0">
             <button
               type="button"
-              onClick={() => closeAllTabs()}
-              className="text-[10px] text-slate-400 hover:text-rose-400 bg-slate-850 hover:bg-slate-800 px-2 py-1 rounded transition-colors font-semibold"
-              title="Close all open tabs"
+              onClick={() => setIsTabMenuOpen(!isTabMenuOpen)}
+              className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Workspace actions"
             >
-              Close All Tabs
+              <MoreVertical size={16} />
             </button>
+            {isTabMenuOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setIsTabMenuOpen(false)} 
+                />
+                <div className="absolute right-0 top-7 bg-white rounded-lg shadow-xl py-1 border border-slate-200 text-slate-700 text-xs w-44 z-50 animate-pop-in">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsTabMenuOpen(false);
+                      setTabIdToConfirmClose(activeTabId);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors flex items-center justify-between cursor-pointer"
+                  >
+                    <span>Close Current Tab</span>
+                    <span className="text-[10px] text-slate-400 font-mono">✕</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsTabMenuOpen(false);
+                      if (tabs.length > 1) {
+                        closeAllTabs();
+                      }
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-rose-50 hover:text-rose-600 transition-colors flex items-center justify-between border-t border-slate-100 cursor-pointer"
+                  >
+                    <span className="font-semibold text-rose-600">Close All Tabs</span>
+                    <span className="text-[10px] text-rose-400 font-mono">⚠️</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -292,6 +334,46 @@ function Shell() {
       </main>
       
       <Toaster />
+
+      {/* Confirmation Modal for Tab Closing */}
+      {tabIdToConfirmClose && (() => {
+        const tabToClose = tabs.find(t => t.id === tabIdToConfirmClose);
+        if (!tabToClose) return null;
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] animate-pop-in">
+            <div className="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 overflow-hidden border border-slate-200">
+              <div className="p-5">
+                <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-500 mb-3 text-lg font-bold">
+                  ⚠️
+                </div>
+                <h3 className="font-heading font-bold text-base text-slate-900 mb-1">Close Workspace Tab?</h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Are you sure you want to close the <span className="font-semibold text-slate-700">"{tabToClose.title}"</span> workspace tab? Any temporary search query, form inputs, or filters will be lost.
+                </p>
+              </div>
+              <div className="bg-slate-50 px-5 py-3.5 flex justify-end gap-2.5 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setTabIdToConfirmClose(null)}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                >
+                  Keep Open
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeTab(tabIdToConfirmClose);
+                    setTabIdToConfirmClose(null);
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer"
+                >
+                  Yes, Close Tab
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

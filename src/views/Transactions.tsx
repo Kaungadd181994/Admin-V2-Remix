@@ -158,8 +158,7 @@ export default function Transactions() {
   return (
     <div className="space-y-4">
       <div className="view-head">
-        <h1 className="font-heading font-bold text-[19px] m-0 mb-1">Transactions</h1>
-        <p className="m-0 text-text-dim text-[12.5px] max-w-[640px]">Disbursement, corporate repayment batches, budget requests and the journal that backs the Circle Ledger.</p>
+        <h1 className="font-heading font-bold text-[19px] m-0">Transactions</h1>
       </div>
 
       <div className="flex gap-1 border-b border-slate-200 mb-4 pb-2">

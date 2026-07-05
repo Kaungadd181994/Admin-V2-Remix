@@ -67,8 +67,7 @@ export default function Risk() {
     <div className="space-y-4">
       <div className="flex items-end justify-between gap-4 flex-wrap mb-4">
         <div>
-          <h1 className="font-heading font-bold text-[19px] m-0 mb-1">Corporate Credit Risk &amp; Exposure</h1>
-          <div className="text-xs text-slate-500 font-medium font-sans">Real-time credit limit enforcement and utilization monitoring of multi-tenant escrow accounts.</div>
+          <h1 className="font-heading font-bold text-[19px] m-0">Corporate Credit Risk &amp; Exposure</h1>
         </div>
         <div className="flex gap-2 shrink-0">
           <select className="h-9 bg-white border border-slate-200 rounded-lg text-slate-700 px-3 py-0 text-[13px] outline-none shadow-sm font-medium focus:border-blue-500 cursor-pointer">

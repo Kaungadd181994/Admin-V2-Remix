@@ -74,8 +74,7 @@ export default function Audit() {
   return (
     <div className="space-y-4">
       <div className="view-head">
-        <h1 className="font-heading font-bold text-[19px] m-0 mb-1">Administrative Audit Trail</h1>
-        <div className="text-xs text-slate-500 font-medium">Impenetrable system activity logs detailing all corporate risk assessments, ledger adjustments, roster synchronization, and disbursements.</div>
+        <h1 className="font-heading font-bold text-[19px] m-0">Administrative Audit Trail</h1>
       </div>
 
       <TableToolbar 

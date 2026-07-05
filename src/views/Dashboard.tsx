@@ -21,8 +21,7 @@ export default function Dashboard() {
     <div className="space-y-5">
       <div className="flex items-end justify-between gap-4 flex-wrap mb-4">
         <div>
-          <h1 className="font-heading font-bold text-[19px] m-0 mb-1">Platform Overview</h1>
-          <p className="m-0 text-text-dim text-[12.5px] max-w-[640px]">Live snapshot across companies, disbursement, repayment and risk. Figures are demo data for the current cycle (JUNE–JULY 2026).</p>
+          <h1 className="font-heading font-bold text-[19px] m-0">Platform Overview</h1>
         </div>
         <div className="flex gap-2 shrink-0">
           <Button onClick={handleExport}>⤓ Export Summary</Button>

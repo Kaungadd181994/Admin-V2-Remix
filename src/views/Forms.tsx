@@ -40,8 +40,7 @@ export default function Forms() {
     <div className="space-y-4">
       <div className="flex items-end justify-between gap-4 flex-wrap mb-4">
         <div>
-          <h1 className="font-heading font-bold text-[19px] m-0 mb-1">Form Creator</h1>
-          <p className="m-0 text-text-dim text-[12.5px] max-w-[640px]">Build dynamic KYC / KYB forms for a company or tenant. No-code — assign per company type, preview, and publish.</p>
+          <h1 className="font-heading font-bold text-[19px] m-0">Form Creator</h1>
         </div>
         <div className="flex gap-2 shrink-0">
           <Button variant="primary" onClick={handlePublish}>Publish Version</Button>

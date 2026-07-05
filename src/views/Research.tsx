@@ -41,7 +41,6 @@ export default function Research() {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h2 className="text-xl font-bold font-heading m-0 text-slate-800">Research & Analytics</h2>
-          <p className="m-0 text-slate-500 text-[12.5px] max-w-[640px] mt-1">Manage research tasks, assign analysts to specific investigations, and review generated compliance and risk reports.</p>
         </div>
         <Button variant="primary" onClick={() => setIsNewTaskOpen(true)}>
           <Plus size={14} /> New Research Task
