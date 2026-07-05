@@ -59,6 +59,12 @@ export default function Companies({ params }: { params?: { companyId?: string } 
     if (!c) return;
     const label = action === 'pass' ? 'advanced to next stage' : action === 'return' ? 'returned for more info' : 'rejected';
     
+    // Core Mandate: Every terminal action (Approve, Reject, Return) intercepts the system thread and forces a mandatory Remark Comment
+    if (!comment.trim()) {
+      addToast('Auditing Enforced', '🛑 SECURE COMPLIANCE: Every terminal action (Approve, Reject, Return) intercepts the system thread and FORCES a mandatory Remark Comment input before database ledger commit.', 'error');
+      return;
+    }
+    
     // Auto advance stages on "pass"
     let nextStage = c.stage;
     let nextStatus = c.status;
@@ -93,7 +99,7 @@ export default function Companies({ params }: { params?: { companyId?: string } 
     const stageComments = currentComments[c.stage] || [];
     const updatedStageComments = [
       ...stageComments,
-      { author: 'ryan.aung@ewa.platform (Action)', text: `${action.toUpperCase()}: ${comment || '(no details provided)'}`, ts: new Date().toISOString().slice(0,16).replace('T',' ') }
+      { author: 'ryan.aung@ewa.platform (Action)', text: `${action.toUpperCase()}: ${comment}`, ts: new Date().toISOString().slice(0,16).replace('T',' ') }
     ];
 
     const updatedCos = data.companies.map(x => x.id === id ? { 
@@ -107,7 +113,7 @@ export default function Companies({ params }: { params?: { companyId?: string } 
     } : x);
 
     updateData({ companies: updatedCos });
-    pushAudit('COMPANY_' + action.toUpperCase(), id, comment || '(no comment)');
+    pushAudit('COMPANY_' + action.toUpperCase(), id, `REMARK: ${comment}`);
     addToast('Action recorded', c.name + ' was ' + label + '.', action === 'reject' ? 'warn' : 'ok');
     setDrawerCorpId(null);
     setComment('');
@@ -205,6 +211,46 @@ export default function Companies({ params }: { params?: { companyId?: string } 
     document.body.removeChild(link);
     addToast('Bulk Export Successful', `Exported data of ${selectedRows.length} selected companies.`, 'ok');
     setSelectedRows([]);
+  };
+
+  const handleToggleEmpWhitelist = (empId: string) => {
+    const emp = data.employees.find(e => e.id === empId);
+    if (!emp) return;
+    
+    if (['PENDING_SETTLE', 'BLACKLISTED', 'FROZEN', 'KYC_RETURNED'].includes(emp.status)) {
+      addToast('Cannot whitelist', `${emp.name} must resolve status "${emp.status}" first.`, 'warn');
+      return;
+    }
+
+    const updatedEmps = data.employees.map(e => {
+      if (e.id === empId) {
+        return { ...e, whitelist: !e.whitelist };
+      }
+      return e;
+    });
+
+    updateData({ employees: updatedEmps });
+    pushAudit('WHITELIST_TOGGLE', empId, `Set to ${!emp.whitelist ? 'ON' : 'OFF'} from Company drawer`);
+    addToast('Employee whitelist updated', `${emp.name} EWA access is now ${!emp.whitelist ? 'ENABLED' : 'DISABLED'}. Budget recalculated.`);
+  };
+
+  const handleUpdateEmpCap = (empId: string, newCapStr: string) => {
+    const val = Number(newCapStr);
+    if (isNaN(val) || val < 0) return;
+
+    const emp = data.employees.find(e => e.id === empId);
+    if (!emp) return;
+
+    const updatedEmps = data.employees.map(e => {
+      if (e.id === empId) {
+        return { ...e, cap: val };
+      }
+      return e;
+    });
+
+    updateData({ employees: updatedEmps });
+    pushAudit('EMPLOYEE_CAP_UPDATE', empId, `Cap adjusted to ${val.toLocaleString()} MMK`);
+    addToast('Employee cap updated', `Set ${emp.name}'s EWA Cap to ${val.toLocaleString()} MMK.`);
   };
 
   const filtered = data.companies.filter(c => {
@@ -459,7 +505,9 @@ export default function Companies({ params }: { params?: { companyId?: string } 
                 <tr>
                   <th className="px-4 py-3 w-8"><input type="checkbox" checked={selectedRows.length === filtered.length && filtered.length > 0} onChange={() => toggleAll(filtered.map(x=>x.id))} /></th>
                   <th className="px-4 py-3">Corporate ID &amp; Name</th><th className="px-4 py-3">Type</th><th className="px-4 py-3 text-right">Total Limit</th><th className="px-4 py-3 text-right">Utilized</th>
-                  <th className="px-4 py-3 text-right">Available</th><th className="px-4 py-3">Payout Day</th><th className="px-4 py-3">Due Day</th><th className="px-4 py-3">Grace</th><th className="px-4 py-3">Late Fee %</th>
+                  <th className="px-4 py-3 text-right">Available</th>
+                  <th className="px-4 py-3 text-right text-emerald-700 bg-emerald-50/50 font-bold">Whitelist Cap Allocation</th>
+                  <th className="px-4 py-3">Payout Day</th><th className="px-4 py-3">Due Day</th><th className="px-4 py-3">Grace</th><th className="px-4 py-3">Late Fee %</th>
                   <th className="px-4 py-3">Tier &amp; Score</th><th className="px-4 py-3">Cap Strategy</th><th className="px-4 py-3">Accrual Mode</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Last Audit</th><th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
@@ -472,6 +520,18 @@ export default function Companies({ params }: { params?: { companyId?: string } 
                     <td className="text-right font-mono text-[12px] text-text-dim">{c.limit?fmt(c.limit):'—'}</td>
                     <td className="text-right font-mono text-[12px] text-text-dim">{c.utilized?fmt(c.utilized):'—'}</td>
                     <td className="text-right font-mono text-[12px] text-text-dim">{c.limit?fmt(c.limit-c.utilized):'—'}</td>
+                    <td className="text-right font-mono text-[12px] bg-emerald-50/15 font-semibold text-emerald-800">
+                      {(() => {
+                        const wList = data.employees.filter(e => e.company === c.id && e.whitelist);
+                        const totalWCap = wList.reduce((sum, e) => sum + (e.cap || 0), 0);
+                        return (
+                          <div className="flex flex-col items-end">
+                            <span>{totalWCap > 0 ? fmt(totalWCap) + ' MMK' : '—'}</span>
+                            <span className="text-[10px] text-emerald-600 font-sans font-medium">{wList.length} whitelisted</span>
+                          </div>
+                        );
+                      })()}
+                    </td>
                     <td className="font-mono text-[12px] text-text-dim">{c.payoutDay!=='-'?'Day '+c.payoutDay:'—'}</td>
                     <td className="font-mono text-[12px] text-text-dim">{c.dueDay!=='-'?'Day '+c.dueDay:'—'}</td>
                     <td className="font-mono text-[12px] text-text-dim">{c.grace!=='-'?c.grace+' Days':'—'}</td>
@@ -770,6 +830,74 @@ export default function Companies({ params }: { params?: { companyId?: string } 
                 <div className="flex flex-col gap-1.5"><div className="text-[10px] text-text-mute uppercase tracking-[.05em] font-bold">Current Utilized</div><div className="text-[13px] font-medium font-mono text-amber-600">{activeCompany.utilized?mmk(activeCompany.utilized):'—'}</div></div>
               </div>
 
+              {/* Whitelist Employee Cap Budget Relation Card */}
+              {(() => {
+                const wList = data.employees.filter(e => e.company === activeCompany.id && e.whitelist);
+                const totalWCap = wList.reduce((sum, e) => sum + (e.cap || 0), 0);
+                const totalWOutstanding = wList.reduce((sum, e) => sum + (e.outstanding || 0), 0);
+                const wListPercentOfLimit = activeCompany.limit > 0 ? ((totalWCap / activeCompany.limit) * 100).toFixed(1) : '0';
+                const utilizationPercent = totalWCap > 0 ? ((totalWOutstanding / totalWCap) * 100).toFixed(1) : '0';
+
+                return (
+                  <div className="bg-emerald-50/40 border border-emerald-100 rounded-xl p-4 mb-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[14px]">🛡️</span>
+                        <h4 className="text-[12px] font-bold text-emerald-800 uppercase tracking-wider m-0">
+                          Whitelist Cap Budget Linkage
+                        </h4>
+                      </div>
+                      <Badge color="green">Active Sync</Badge>
+                    </div>
+
+                    <p className="text-[11.5px] text-emerald-800/80 leading-relaxed mb-3 font-sans">
+                      The total credit limit of this corporate is dynamically allocated to individual employees via the **Whitelist Roster**. Only Whitelisted employees have active EWA caps and can draw advances.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-3.5 bg-white border border-emerald-100 p-3 rounded-lg text-xs font-sans mb-3.5">
+                      <div>
+                        <span className="text-slate-400 block uppercase text-[9px] font-bold mb-0.5">Whitelisted Employees</span>
+                        <strong className="text-slate-800 text-[13px]">{wList.length} Active Profiles</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block uppercase text-[9px] font-bold mb-0.5">Total Roster Cap Pool</span>
+                        <strong className="text-emerald-700 font-mono text-[13px]">{fmt(totalWCap)} MMK</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block uppercase text-[9px] font-bold mb-0.5">Active Whitelist Draw</span>
+                        <strong className="text-slate-800 font-mono text-[13px]">{fmt(totalWOutstanding)} MMK</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block uppercase text-[9px] font-bold mb-0.5">Available Whitelist Room</span>
+                        <strong className="text-blue-700 font-mono text-[13px]">{fmt(totalWCap - totalWOutstanding)} MMK</strong>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      <div>
+                        <div className="flex justify-between text-[10.5px] text-emerald-800 font-medium mb-1">
+                          <span>Roster Cap Allocated (% of Treasury Limit)</span>
+                          <span className="font-bold">{wListPercentOfLimit}%</span>
+                        </div>
+                        <div className="h-1.5 bg-emerald-100/60 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${Math.min(Number(wListPercentOfLimit), 100)}%` }}></div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-[10.5px] text-emerald-800 font-medium mb-1">
+                          <span>Whitelist Active Utilization Rate</span>
+                          <span className="font-bold">{utilizationPercent}%</span>
+                        </div>
+                        <div className="h-1.5 bg-emerald-100/60 rounded-full overflow-hidden">
+                          <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.min(Number(utilizationPercent), 100)}%` }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="text-[11px] uppercase tracking-[.06em] text-text-mute mt-6 mb-3 pt-4 border-t border-line">Policy & Rule Configuration (Maker-Checker)</div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-4 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <div className="flex flex-col gap-1.5"><div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Payroll Window</div><input type="text" className="bg-white border border-slate-200 rounded text-xs px-2 py-1.5" defaultValue="1st to 30th" /></div>
@@ -786,9 +914,21 @@ export default function Companies({ params }: { params?: { companyId?: string } 
                 </div>
               </div>
 
-              <div className="text-[11px] uppercase tracking-[.06em] text-text-mute mt-6 mb-3 pt-4 border-t border-line">Onboarding Action</div>
+              <div className="flex items-center justify-between mt-6 mb-3 pt-4 border-t border-line">
+                <div className="text-[11px] uppercase tracking-[.06em] text-text-mute">Onboarding Action</div>
+                <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded uppercase font-mono">
+                  ⚠️ Mandatory Audit Remark Required
+                </span>
+              </div>
               <p className="text-[11px] text-text-mute mb-3 -mt-1 font-medium">Operations verifies KYC/KYB → Risk sets rules (Maker) → Finance approves budget (Checker).</p>
-              <textarea className="w-full bg-panel-2 border border-line text-text-main p-2.5 text-[12.5px] min-h-[64px] resize-y focus:outline-none focus:border-primary mb-3 rounded-lg" placeholder="Add a comment for this stage action…" value={comment} onChange={e=>setComment(e.target.value)}></textarea>
+              <textarea 
+                className={`w-full bg-panel-2 border text-text-main p-2.5 text-[12.5px] min-h-[64px] resize-y focus:outline-none rounded-lg transition-all ${
+                  !comment.trim() ? 'border-red-300 focus:border-red-500 bg-red-50/10' : 'border-line focus:border-primary'
+                }`}
+                placeholder="Add a detailed remark comment for this stage action (required)..." 
+                value={comment} 
+                onChange={e=>setComment(e.target.value)}
+              />
               <div className="flex gap-2 flex-wrap mb-6">
                 <Button variant="success" onClick={() => handleAction('pass', activeCompany.id)}>✓ Pass / Approve</Button>
                 <Button variant="danger" onClick={() => handleAction('return', activeCompany.id)}>↩ Return</Button>
@@ -798,17 +938,48 @@ export default function Companies({ params }: { params?: { companyId?: string } 
               <div className="text-[11px] uppercase tracking-[.06em] text-text-mute mt-6 mb-3 pt-4 border-t border-line">Linked Employees ({linkedEmps.length})</div>
               <div className="overflow-x-auto border border-line bg-panel rounded-xl mb-4 shadow-sm">
                 <table className="dt min-w-full">
-                  <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500"><tr><th className="px-3 py-2">Employee</th><th className="px-3 py-2">KYC</th><th className="px-3 py-2">Whitelist</th><th className="px-3 py-2 text-right">Outstanding</th><th className="px-3 py-2">Status</th></tr></thead>
+                  <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500">
+                    <tr>
+                      <th className="px-3 py-2">Employee</th>
+                      <th className="px-3 py-2">KYC</th>
+                      <th className="px-3 py-2">Whitelist</th>
+                      <th className="px-3 py-2 text-right">EWA Cap Limit (MMK)</th>
+                      <th className="px-3 py-2 text-right">Outstanding</th>
+                      <th className="px-3 py-2">Status</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {linkedEmps.length ? linkedEmps.map(e => (
-                      <tr key={e.id}>
-                        <td className="px-3 py-2">{e.id} {e.name}</td>
+                      <tr key={e.id} className="hover:bg-slate-50/50">
+                        <td className="px-3 py-2 font-medium text-slate-900">{e.id} {e.name}</td>
                         <td className="px-3 py-2"><StatusBadge status={e.kyc} /></td>
-                        <td className="px-3 py-2">{e.whitelist?<Badge color="green">ON</Badge>:<Badge color="grey">OFF</Badge>}</td>
-                        <td className="px-3 py-2 text-right font-mono text-[11px]">{fmt(e.outstanding)}</td>
+                        <td className="px-3 py-2">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleEmpWhitelist(e.id)}
+                            className={`px-2.5 py-1 text-[11px] font-bold rounded cursor-pointer transition-all ${
+                              e.whitelist 
+                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-200' 
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
+                            }`}
+                          >
+                            {e.whitelist ? '✓ ENABLED' : '✕ DISABLED'}
+                          </button>
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <input 
+                              type="number" 
+                              className="w-24 bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 rounded text-right px-1.5 py-0.5 font-mono text-[11.5px] transition-all outline-none"
+                              value={e.cap || 0}
+                              onChange={evt => handleUpdateEmpCap(e.id, evt.target.value)}
+                            />
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-right font-mono text-[11px] text-slate-600">{fmt(e.outstanding)}</td>
                         <td className="px-3 py-2"><StatusBadge status={e.status} /></td>
                       </tr>
-                    )) : <tr><td colSpan={5} className="text-slate-400 text-[12px] p-6 text-center border-2 border-dashed border-slate-100 rounded-lg m-2">No employees uploaded yet.</td></tr>}
+                    )) : <tr><td colSpan={6} className="text-slate-400 text-[12px] p-6 text-center border-2 border-dashed border-slate-100 rounded-lg m-2">No employees uploaded yet.</td></tr>}
                   </tbody>
                 </table>
               </div>

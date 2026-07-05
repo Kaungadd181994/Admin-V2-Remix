@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function Repayments() {
-  const { data, setData } = useData();
+  const { data, updateData } = useData();
   const [activeSubTab, setActiveSubTab] = useState('settlements');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -89,8 +89,7 @@ export default function Repayments() {
       }
 
       // Update global context
-      setData({
-        ...data,
+      updateData({
         batches: updatedBatches,
         journal: [ ...newJournalEntries, ...data.journal ],
         // Also deduct employee outstanding amounts if this company's repayment cleared!
@@ -126,6 +125,15 @@ export default function Repayments() {
     const targetCorp = data.companies.find((c: any) => c.id === repayCorp);
     if (!targetCorp) return;
 
+    // Find all disbursements for this corporation that are currently active/disbursed and have originalRef
+    const companyEmployees = data.employees.filter((e: any) => e.company === targetCorp.id);
+    const relatedRefs = data.disbursements
+      .filter((d: any) => {
+        const empId = d.emp.split(' ')[0];
+        return companyEmployees.some((e: any) => e.id === empId) && d.originalRef;
+      })
+      .map((d: any) => d.originalRef);
+
     const newBatch = {
       id: `BCH-${Math.floor(Math.random() * 9000) + 1000}`,
       corp: `${targetCorp.id} ${targetCorp.name}`,
@@ -136,6 +144,7 @@ export default function Repayments() {
       invoice: Number(repayAmount),
       received: Number(repayAmount),
       ref: repayProofFile,
+      relatedOriginalRefs: relatedRefs,
       ts: new Date().toISOString().replace('T', ' ').substring(0, 16),
       coverage: 100.0,
       suspense: 0,
@@ -152,8 +161,7 @@ export default function Repayments() {
       amount: Number(repayAmount)
     };
 
-    setData({
-      ...data,
+    updateData({
       batches: [newBatch, ...data.batches],
       journal: [newJournal, ...data.journal],
       auditLogs: [
@@ -180,6 +188,15 @@ export default function Repayments() {
     const targetCorp = data.companies.find((c: any) => c.id === suspenseCorp);
     if (!targetBatch || !targetCorp) return;
 
+    // Find all disbursements for this corporation that are currently active/disbursed and have originalRef
+    const companyEmployees = data.employees.filter((e: any) => e.company === targetCorp.id);
+    const relatedRefs = data.disbursements
+      .filter((d: any) => {
+        const empId = d.emp.split(' ')[0];
+        return companyEmployees.some((e: any) => e.id === empId) && d.originalRef;
+      })
+      .map((d: any) => d.originalRef);
+
     const updatedBatches = data.batches.map((b: any) => {
       if (b.id === suspenseId) {
         return {
@@ -189,14 +206,14 @@ export default function Repayments() {
           expected: b.suspense,
           received: b.suspense,
           suspense: 0,
+          relatedOriginalRefs: relatedRefs,
           coverage: 100.0
         };
       }
       return b;
     });
 
-    setData({
-      ...data,
+    updateData({
       batches: updatedBatches,
       auditLogs: [
         {
@@ -232,8 +249,7 @@ export default function Repayments() {
       return b;
     });
 
-    setData({
-      ...data,
+    updateData({
       batches: updatedBatches,
       auditLogs: [
         {
@@ -516,6 +532,7 @@ export default function Repayments() {
                 <tr>
                   <th className="px-4 py-3">Batch ID</th>
                   <th className="px-4 py-3">Corporate Client</th>
+                  <th className="px-4 py-3 text-blue-700">Linked EWA Refs</th>
                   <th className="px-4 py-3 text-right">Expected billing</th>
                   <th className="px-4 py-3 text-right">Accrued Late Fees</th>
                   <th className="px-4 py-3 text-right">Total Invoice</th>
@@ -530,6 +547,17 @@ export default function Repayments() {
                   <tr key={b.id} className="hover:bg-slate-50/50">
                     <td className="font-mono text-[12px] text-slate-500 font-bold px-4 py-3">{b.id}</td>
                     <td className="font-semibold text-slate-800">{b.corp}</td>
+                    <td>
+                      <div className="flex flex-wrap gap-1 max-w-[155px] py-1">
+                        {b.relatedOriginalRefs && b.relatedOriginalRefs.length > 0 ? (
+                          b.relatedOriginalRefs.map((r: string) => (
+                            <span key={r} className="text-[9.5px] font-mono bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded font-bold">{r}</span>
+                          ))
+                        ) : (
+                          <span className="text-slate-400 italic text-[11px]">No active links</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="text-right font-mono text-[12px] text-slate-500">
                       {b.expected > 0 ? `${b.expected.toLocaleString()} MMK` : '—'}
                     </td>

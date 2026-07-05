@@ -16,6 +16,9 @@ export default function Transactions() {
   const [activeDisbId, setActiveDisbId] = useState<string | null>(null);
   const [activeBatchId, setActiveBatchId] = useState<string | null>(null);
 
+  // Compliance auditing state
+  const [adminRemark, setAdminRemark] = useState('');
+
   // Manual payment recording form values
   const [manualPayAmount, setManualPayAmount] = useState('');
   const [manualPayRef, setManualPayRef] = useState('');
@@ -300,7 +303,7 @@ export default function Transactions() {
               <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 border-b border-slate-200">
                 <tr>
                   <th className="px-4 py-3 w-8"><input type="checkbox" checked={selectedRows.length === filteredDisbursements.length && filteredDisbursements.length > 0} onChange={() => toggleAll(filteredDisbursements.map(x=>x.id))} /></th>
-                  <th className="px-4 py-3">Request ID</th><th className="px-4 py-3">Employee</th><th className="px-4 py-3">Timestamp</th><th className="px-4 py-3 text-right">Accrued</th><th className="px-4 py-3 text-right">Requested</th><th className="px-4 py-3 text-right">Fee</th><th className="px-4 py-3 text-right">Debit</th><th className="px-4 py-3 text-right">Net</th><th className="px-4 py-3">Channel</th><th className="px-4 py-3">Ref</th><th className="px-4 py-3">Error/Audit Logs</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Action</th>
+                  <th className="px-4 py-3">Request ID</th><th className="px-4 py-3">Employee</th><th className="px-4 py-3">Timestamp</th><th className="px-4 py-3 text-right">Accrued</th><th className="px-4 py-3 text-right">Requested</th><th className="px-4 py-3 text-right">Fee</th><th className="px-4 py-3 text-right">Debit</th><th className="px-4 py-3 text-right">Net</th><th className="px-4 py-3">Channel</th><th className="px-4 py-3">Payout Ref</th><th className="px-4 py-3 text-blue-700">Original Ref</th><th className="px-4 py-3">Error/Audit Logs</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="text-[12.5px] text-slate-700">
@@ -310,7 +313,7 @@ export default function Transactions() {
                     <td className="font-mono text-[12px] text-text-dim">{d.id}</td><td>{d.emp}</td><td className="font-mono text-[12px] text-text-dim">{d.ts}</td>
                     <td className="text-right font-mono text-[12px] text-text-dim">{fmt(d.accrued)}</td><td className="text-right font-mono text-[12px] text-text-dim">{fmt(d.requested)}</td><td className="text-right font-mono text-[12px] text-text-dim">{fmt(d.fee)}</td>
                     <td className="text-right font-mono text-[12px] text-text-dim">{fmt(d.debit)}</td><td className="text-right font-mono text-[12px] text-text-dim">{fmt(d.net)}</td>
-                    <td>{d.channel}</td><td className="font-mono text-[12px] text-text-dim">{d.ref}</td>
+                    <td>{d.channel}</td><td className="font-mono text-[12px] text-text-dim">{d.ref}</td><td className="font-mono text-[12px] text-blue-700 font-bold bg-blue-50/30 px-2 py-1 rounded">{d.originalRef || '—'}</td>
                     <td>
                       {d.error !== 'None' ? (
                         <span className="text-[10.5px] font-mono font-bold bg-rose-50 text-rose-600 border border-rose-100 px-1.5 py-0.5 rounded">
@@ -336,7 +339,7 @@ export default function Transactions() {
               <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 border-b border-slate-200">
                 <tr>
                   <th className="px-4 py-3 w-8"><input type="checkbox" checked={selectedRows.length === filteredBatches.length && filteredBatches.length > 0} onChange={() => toggleAll(filteredBatches.map(x=>x.id))} /></th>
-                  <th className="px-4 py-3">Batch ID</th><th className="px-4 py-3">Corporate</th><th className="px-4 py-3">Cycle</th><th className="px-4 py-3 text-right">Expected</th><th className="px-4 py-3 text-right">Late Fees</th><th className="px-4 py-3 text-right">Invoice</th><th className="px-4 py-3 text-right">Received</th><th className="px-4 py-3">Coverage</th><th className="px-4 py-3 text-right">Suspense</th><th className="px-4 py-3">GL Clearing Acc</th><th className="px-4 py-3">Delay / Overdue</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Action</th>
+                  <th className="px-4 py-3">Batch ID</th><th className="px-4 py-3">Corporate</th><th className="px-4 py-3">Cycle</th><th className="px-4 py-3 text-blue-700">Linked EWA Refs</th><th className="px-4 py-3 text-right">Expected</th><th className="px-4 py-3 text-right">Late Fees</th><th className="px-4 py-3 text-right">Invoice</th><th className="px-4 py-3 text-right">Received</th><th className="px-4 py-3">Coverage</th><th className="px-4 py-3 text-right">Suspense</th><th className="px-4 py-3">GL Clearing Acc</th><th className="px-4 py-3">Delay / Overdue</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="text-[12.5px] text-slate-700">
@@ -344,6 +347,17 @@ export default function Transactions() {
                   <tr key={b.id} className={selectedRows.includes(b.id) ? 'bg-blue-50/50' : ''}>
                     <td className="px-4"><input type="checkbox" checked={selectedRows.includes(b.id)} onChange={() => toggleRow(b.id)} /></td>
                     <td className="font-mono text-[12px] text-text-dim">{b.id}</td><td>{b.corp}</td><td className="font-mono text-[12px] text-text-dim">{b.cycle}</td>
+                    <td>
+                      <div className="flex flex-wrap gap-1 max-w-[155px] py-1">
+                        {b.relatedOriginalRefs && b.relatedOriginalRefs.length > 0 ? (
+                          b.relatedOriginalRefs.map((r: string) => (
+                            <span key={r} className="text-[9.5px] font-mono bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded font-bold">{r}</span>
+                          ))
+                        ) : (
+                          <span className="text-slate-400 italic text-[11px]">No active links</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="text-right font-mono text-[12px] text-text-dim">{fmt(b.expected)}</td><td className="text-right font-mono text-[12px] text-text-dim">{fmt(b.lateFees)}</td><td className="text-right font-mono text-[12px] text-text-dim">{fmt(b.invoice)}</td>
                     <td className="text-right font-mono text-[12px] text-text-dim">{fmt(b.received)}</td><td className="font-mono text-[12px] text-text-dim"><strong>{b.coverage.toFixed(2)}%</strong></td>
                     <td className="text-right font-mono text-[12px] text-text-dim">{fmt(b.suspense)}</td>
@@ -494,12 +508,16 @@ export default function Transactions() {
       </Drawer>
 
       {/* Disbursement Details Drawer */}
-      <Drawer isOpen={!!activeDisbId} onClose={() => setActiveDisbId(null)} mode="right">
+      <Drawer isOpen={!!activeDisbId} onClose={() => { setActiveDisbId(null); setAdminRemark(''); }} mode="right">
         {(() => {
           const d = data.disbursements.find(x => x.id === activeDisbId);
           if (!d) return null;
           
           const handleUpdateDisbStatus = (newStatus: string, manualRef?: string) => {
+            if (!adminRemark.trim()) {
+              addToast('Auditing Enforced', '🛑 SECURE COMPLIANCE: A mandatory remark comment is required for administrative intervention!', 'error');
+              return;
+            }
             const updated = data.disbursements.map(x => {
               if (x.id === d.id) {
                 return { ...x, status: newStatus, ref: manualRef || x.ref };
@@ -507,8 +525,9 @@ export default function Transactions() {
               return x;
             });
             updateData({ disbursements: updated });
-            pushAudit('DISBURSEMENT_STATUS_UPDATE', d.id, `Status updated to ${newStatus}${manualRef ? ' with ref ' + manualRef : ''}`);
+            pushAudit('DISBURSEMENT_STATUS_UPDATE', d.id, `Status updated to ${newStatus}${manualRef ? ' with ref ' + manualRef : ''}. REMARK: ${adminRemark}`);
             addToast('Disbursement Updated', `Request ${d.id} status changed to ${newStatus}.`, 'ok');
+            setAdminRemark('');
             setActiveDisbId(null);
           };
 
@@ -541,7 +560,29 @@ export default function Transactions() {
                       <span className="text-slate-400 block uppercase tracking-[0.05em] text-[9.5px]">Channel Reference</span>
                       <strong className="text-slate-700 font-mono text-[12px]">{d.ref}</strong>
                     </div>
+                    <div className="col-span-2">
+                      <span className="text-blue-500 block uppercase tracking-[0.05em] text-[9.5px] font-bold">Original Reference (Orgnal Ref)</span>
+                      <strong className="text-blue-700 font-mono text-[12.5px] font-bold">{d.originalRef || '—'}</strong>
+                    </div>
                   </div>
+
+                  {(() => {
+                    const linkedBatch = data.batches.find((b: any) => b.relatedOriginalRefs?.includes(d.originalRef));
+                    return linkedBatch ? (
+                      <div className="bg-emerald-50 text-emerald-800 p-3 rounded-xl border border-emerald-200">
+                        <span className="text-[9.5px] uppercase font-bold tracking-wider text-emerald-600 block">Settled via Repayment Batch</span>
+                        <div className="flex justify-between items-center mt-1">
+                          <span className="font-semibold text-xs">{linkedBatch.id} - {linkedBatch.corp}</span>
+                          <span className="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-200">{linkedBatch.status}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-amber-50 text-amber-800 p-3 rounded-xl border border-amber-200">
+                        <span className="text-[9.5px] uppercase font-bold tracking-wider text-amber-600 block">Settlement Linkage Status</span>
+                        <span className="text-xs font-semibold">Unsettled / Waiting for payroll cycle deduction repayment.</span>
+                      </div>
+                    );
+                  })()}
 
                   <div className="space-y-2">
                     <span className="text-slate-400 block uppercase tracking-[0.05em] text-[9.5px]">Accounting Amounts</span>
@@ -565,10 +606,28 @@ export default function Transactions() {
 
                   {/* Manual administrative intervention */}
                   <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 space-y-3">
-                    <h4 className="m-0 text-blue-900 font-bold text-[12.5px] flex items-center gap-1">🛡 Platform Admin Intervention</h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="m-0 text-blue-900 font-bold text-[12.5px] flex items-center gap-1">🛡 Platform Admin Intervention</h4>
+                      <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded uppercase font-mono">
+                        ⚠️ Audit Required
+                      </span>
+                    </div>
                     <p className="m-0 text-slate-600 text-[11.5px] leading-normal">Manually update status, overwrite transfer reference codes, or handle routing errors for this EWA request.</p>
                     
-                    <div className="flex flex-wrap gap-2">
+                    <div className="space-y-1.5 mt-2">
+                      <label className="text-[10px] uppercase font-bold text-slate-500">Justification / Action Remark (Required)</label>
+                      <textarea
+                        rows={2}
+                        className={`w-full text-xs p-2 rounded-lg border focus:outline-none transition-all ${
+                          !adminRemark.trim() ? 'border-red-300 focus:border-red-500 bg-red-50/10' : 'border-slate-200 bg-white focus:border-blue-500'
+                        }`}
+                        placeholder="Explain the reason for manual administrative status override (e.g., wallet failure bypass)..."
+                        value={adminRemark}
+                        onChange={e => setAdminRemark(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 pt-1">
                       {d.status !== 'SUCCESS' && d.status !== 'SETTLED' && (
                         <Button size="sm" variant="success" onClick={() => {
                           const refCode = 'M-TXN-' + Math.floor(10000 + Math.random() * 90000);
@@ -699,6 +758,44 @@ export default function Transactions() {
                           <span>Suspense (Unmatched Over-allocation):</span>
                           <span>{fmt(b.suspense)} MMK</span>
                         </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="text-blue-600 font-bold block uppercase tracking-[0.05em] text-[9.5px]">Related EWA Disbursements (by Original Ref)</span>
+                    <div className="space-y-1.5 bg-blue-50/40 p-3 rounded-xl border border-blue-100 font-sans text-xs">
+                      {b.relatedOriginalRefs && b.relatedOriginalRefs.length > 0 ? (
+                        <div className="divide-y divide-blue-100">
+                          {b.relatedOriginalRefs.map((refId: string) => {
+                            const relatedDisb = data.disbursements.find((d: any) => d.originalRef === refId);
+                            return (
+                              <div key={refId} className="py-2 first:pt-0 last:pb-0 flex items-center justify-between">
+                                <div>
+                                  <div className="font-semibold text-slate-800 flex items-center gap-1.5">
+                                    <span className="font-mono text-blue-700 font-bold">{refId}</span>
+                                    {relatedDisb && <span className="text-slate-500">({relatedDisb.id})</span>}
+                                  </div>
+                                  <div className="text-[10px] text-slate-500 mt-0.5">
+                                    {relatedDisb ? `${relatedDisb.emp} · ${relatedDisb.ts}` : 'Unknown Request'}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  {relatedDisb ? (
+                                    <>
+                                      <div className="font-bold font-mono text-slate-800">{fmt(relatedDisb.debit)} MMK</div>
+                                      <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-1 rounded border border-emerald-100">{relatedDisb.status}</span>
+                                    </>
+                                  ) : (
+                                    <span className="text-slate-400 italic">No record found</span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 italic block py-1">No linked disbursements for this suspense batch.</span>
                       )}
                     </div>
                   </div>

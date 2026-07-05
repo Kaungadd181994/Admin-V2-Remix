@@ -12,6 +12,10 @@ export default function Employees({ params }: { params?: { employeeId?: string }
   const [drawerEmpId, setDrawerEmpId] = useState<string | null>(null);
   const [newEmpComment, setNewEmpComment] = useState('');
   
+  // Auditing compliance states
+  const [actionPending, setActionPending] = useState<{ id: string; action: string; name: string } | null>(null);
+  const [verifyRemark, setVerifyRemark] = useState('');
+  
   useEffect(() => {
     if (params?.employeeId) {
       setDrawerEmpId(params.employeeId);
@@ -365,9 +369,9 @@ export default function Employees({ params }: { params?: { employeeId?: string }
                       <td className="px-4 py-3 font-mono text-xs text-slate-500">{v.confidence}</td>
                       <td className="px-4 py-3 font-mono text-xs text-slate-500">{v.submitted}</td>
                       <td className="px-4 py-3 flex gap-2 justify-end">
-                        <Button size="sm" variant="primary" onClick={() => handleVerifyAction(v.id, 'approve')}>Approve</Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleVerifyAction(v.id, 'return')}>Return</Button>
-                        <Button size="sm" variant="danger" onClick={() => handleVerifyAction(v.id, 'reject')}>Reject</Button>
+                        <Button size="sm" variant="primary" onClick={() => setActionPending({ id: v.id, action: 'approve', name: v.name })}>Approve</Button>
+                        <Button size="sm" variant="ghost" onClick={() => setActionPending({ id: v.id, action: 'return', name: v.name })}>Return</Button>
+                        <Button size="sm" variant="danger" onClick={() => setActionPending({ id: v.id, action: 'reject', name: v.name })}>Reject</Button>
                       </td>
                     </tr>
                   );
@@ -590,6 +594,117 @@ export default function Employees({ params }: { params?: { employeeId?: string }
             </>
           );
         })()}
+      </Drawer>
+
+      {/* SECURE COMPLIANCE: Auditing Interceptor Dialog */}
+      <Drawer isOpen={!!actionPending} onClose={() => { setActionPending(null); setVerifyRemark(''); }} mode="center">
+        <div className="p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="text-[14.5px] font-heading font-bold text-slate-800 m-0">Compliance Audit Interceptor</h3>
+              <div className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">SYSTEM INTERCEPT · COA SAFETY PROTOCOL</div>
+            </div>
+            <span className="text-[9.5px] font-bold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded uppercase font-mono animate-pulse">
+              ⚠️ Forced Audit Trail
+            </span>
+          </div>
+
+          <div className="bg-slate-50 border border-slate-200/60 p-3.5 rounded-lg text-xs font-sans space-y-2">
+            <div className="flex justify-between">
+              <span className="text-slate-400">Target Employee Name:</span>
+              <span className="font-bold text-slate-700">{actionPending?.name}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Proposed Queue Action:</span>
+              <Badge color={actionPending?.action === 'approve' ? 'green' : actionPending?.action === 'return' ? 'grey' : 'red'}>
+                {actionPending?.action.toUpperCase()}
+              </Badge>
+            </div>
+            <div className="text-[11px] text-slate-500 italic mt-2">
+              Every terminal action intercepts the system thread and forces a mandatory Remark Comment input before database ledger commit.
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] uppercase font-bold text-slate-400">Audit Remark Comment (Required)</label>
+            <textarea
+              required
+              rows={3}
+              className={`w-full border rounded-lg p-2.5 text-xs focus:outline-none transition-all ${
+                !verifyRemark.trim() ? 'border-red-300 focus:border-red-500 bg-red-50/10' : 'border-slate-200 focus:bg-white focus:border-blue-500 bg-slate-50'
+              }`}
+              placeholder="Provide a specific justification / reason for this queue action (e.g., matched B2B roster ID or HR-verified phone number)..."
+              value={verifyRemark}
+              onChange={e => setVerifyRemark(e.target.value)}
+            />
+          </div>
+
+          <div className="flex gap-2.5 pt-2">
+            <Button
+              variant="primary"
+              className="flex-1 h-10 font-bold"
+              onClick={() => {
+                if (!verifyRemark.trim()) {
+                  addToast('Remark Required', 'You must provide a detailed comment before the action is committed.', 'error');
+                  return;
+                }
+                if (actionPending) {
+                  const { id, action, name } = actionPending;
+                  
+                  // Move approved employees to employee directory
+                  let currentEmployees = [...data.employees];
+                  if (action === 'approve') {
+                    const item = data.verifyQueue.find(v => v.id === id);
+                    if (item) {
+                      const isExist = currentEmployees.some(x => x.name === item.name && x.company === item.company);
+                      if (!isExist) {
+                        const newEmpId = 'EMP-0' + (currentEmployees.length + 10).toString().padStart(3, '0');
+                        currentEmployees.push({
+                          id: newEmpId,
+                          name: item.name,
+                          company: item.company,
+                          dept: 'Staff',
+                          salary: 800000,
+                          kyc: 'VERIFIED',
+                          whitelist: true,
+                          outstanding: 0,
+                          cap: 400000,
+                          status: 'ACTIVE',
+                          reason: verifyRemark,
+                          bank: 'Pending Setup',
+                          lastSync: 'Just now'
+                        });
+                      }
+                    }
+                  }
+
+                  const remainingQueue = data.verifyQueue.filter(v => v.id !== id);
+                  updateData({ 
+                    employees: currentEmployees,
+                    verifyQueue: remainingQueue
+                  });
+
+                  pushAudit(`VERIFICATION_${action.toUpperCase()}`, id, `REMARK: ${verifyRemark} (Target: ${name})`);
+                  addToast('Queue updated', `${name} request ${action}d with remark.`, action === 'reject' ? 'warn' : 'ok');
+                  setActionPending(null);
+                  setVerifyRemark('');
+                }
+              }}
+            >
+              Commit Ledger Action
+            </Button>
+            <Button
+              variant="ghost"
+              className="h-10"
+              onClick={() => {
+                setActionPending(null);
+                setVerifyRemark('');
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
       </Drawer>
     </div>
   );

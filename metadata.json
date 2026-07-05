@@ -1,6 +1,6 @@
 {
   "name": "Remix: EWA Admin Portal",
-  "description": "Interactive functional prototype for the Earned Wage Access admin portal with mock data and full workflow simulation.",
+  "description": "Enterprise Earned Wage Access (EWA) admin portal integrated with MoBiz disbursement APIs, multi-stage KYC/KYB Maker-Checker checklists, automated whitelisting, double-entry general ledger, and mandatory state auditing safety overrides.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
