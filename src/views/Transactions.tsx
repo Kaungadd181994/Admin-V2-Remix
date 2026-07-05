@@ -301,7 +301,7 @@ export default function Transactions() {
               <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 border-b border-slate-200">
                 <tr>
                   <th className="px-4 py-3 w-8"><input type="checkbox" checked={selectedRows.length === filteredDisbursements.length && filteredDisbursements.length > 0} onChange={() => toggleAll(filteredDisbursements.map(x=>x.id))} /></th>
-                  <th className="px-4 py-3">Request ID</th><th className="px-4 py-3">Employee</th><th className="px-4 py-3">Timestamp</th><th className="px-4 py-3 text-right">Accrued</th><th className="px-4 py-3 text-right">Requested</th><th className="px-4 py-3 text-right">Fee</th><th className="px-4 py-3 text-right">Debit</th><th className="px-4 py-3 text-right">Net</th><th className="px-4 py-3">Channel</th><th className="px-4 py-3">Ref</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Action</th>
+                  <th className="px-4 py-3">Request ID</th><th className="px-4 py-3">Employee</th><th className="px-4 py-3">Timestamp</th><th className="px-4 py-3 text-right">Accrued</th><th className="px-4 py-3 text-right">Requested</th><th className="px-4 py-3 text-right">Fee</th><th className="px-4 py-3 text-right">Debit</th><th className="px-4 py-3 text-right">Net</th><th className="px-4 py-3">Channel</th><th className="px-4 py-3">Ref</th><th className="px-4 py-3">Error/Audit Logs</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="text-[12.5px] text-slate-700">
@@ -311,7 +311,17 @@ export default function Transactions() {
                     <td className="font-mono text-[12px] text-text-dim">{d.id}</td><td>{d.emp}</td><td className="font-mono text-[12px] text-text-dim">{d.ts}</td>
                     <td className="text-right font-mono text-[12px] text-text-dim">{fmt(d.accrued)}</td><td className="text-right font-mono text-[12px] text-text-dim">{fmt(d.requested)}</td><td className="text-right font-mono text-[12px] text-text-dim">{fmt(d.fee)}</td>
                     <td className="text-right font-mono text-[12px] text-text-dim">{fmt(d.debit)}</td><td className="text-right font-mono text-[12px] text-text-dim">{fmt(d.net)}</td>
-                    <td>{d.channel}</td><td className="font-mono text-[12px] text-text-dim">{d.ref}</td><td><StatusBadge status={d.status} /></td>
+                    <td>{d.channel}</td><td className="font-mono text-[12px] text-text-dim">{d.ref}</td>
+                    <td>
+                      {d.error !== 'None' ? (
+                        <span className="text-[10.5px] font-mono font-bold bg-rose-50 text-rose-600 border border-rose-100 px-1.5 py-0.5 rounded">
+                          {d.error}
+                        </span>
+                      ) : (
+                        <span className="text-[10.5px] text-slate-400 italic">No errors</span>
+                      )}
+                    </td>
+                    <td><StatusBadge status={d.status} /></td>
                     <td className="text-right pr-4"><Button size="sm" onClick={() => setActiveDisbId(d.id)}>Details</Button></td>
                   </tr>
                 ))}
@@ -327,7 +337,7 @@ export default function Transactions() {
               <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 border-b border-slate-200">
                 <tr>
                   <th className="px-4 py-3 w-8"><input type="checkbox" checked={selectedRows.length === filteredBatches.length && filteredBatches.length > 0} onChange={() => toggleAll(filteredBatches.map(x=>x.id))} /></th>
-                  <th className="px-4 py-3">Batch ID</th><th className="px-4 py-3">Corporate</th><th className="px-4 py-3">Cycle</th><th className="px-4 py-3 text-right">Expected</th><th className="px-4 py-3 text-right">Late Fees</th><th className="px-4 py-3 text-right">Invoice</th><th className="px-4 py-3 text-right">Received</th><th className="px-4 py-3">Coverage</th><th className="px-4 py-3 text-right">Suspense</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Action</th>
+                  <th className="px-4 py-3">Batch ID</th><th className="px-4 py-3">Corporate</th><th className="px-4 py-3">Cycle</th><th className="px-4 py-3 text-right">Expected</th><th className="px-4 py-3 text-right">Late Fees</th><th className="px-4 py-3 text-right">Invoice</th><th className="px-4 py-3 text-right">Received</th><th className="px-4 py-3">Coverage</th><th className="px-4 py-3 text-right">Suspense</th><th className="px-4 py-3">GL Clearing Acc</th><th className="px-4 py-3">Delay / Overdue</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="text-[12.5px] text-slate-700">
@@ -337,7 +347,20 @@ export default function Transactions() {
                     <td className="font-mono text-[12px] text-text-dim">{b.id}</td><td>{b.corp}</td><td className="font-mono text-[12px] text-text-dim">{b.cycle}</td>
                     <td className="text-right font-mono text-[12px] text-text-dim">{fmt(b.expected)}</td><td className="text-right font-mono text-[12px] text-text-dim">{fmt(b.lateFees)}</td><td className="text-right font-mono text-[12px] text-text-dim">{fmt(b.invoice)}</td>
                     <td className="text-right font-mono text-[12px] text-text-dim">{fmt(b.received)}</td><td className="font-mono text-[12px] text-text-dim"><strong>{b.coverage.toFixed(2)}%</strong></td>
-                    <td className="text-right font-mono text-[12px] text-text-dim">{fmt(b.suspense)}</td><td><StatusBadge status={b.status} /></td>
+                    <td className="text-right font-mono text-[12px] text-text-dim">{fmt(b.suspense)}</td>
+                    <td className="font-mono text-[12px] text-slate-500">{b.gl}</td>
+                    <td>
+                      {b.status === 'OVERDUE' ? (
+                        <Badge color="red">5 Days Overdue</Badge>
+                      ) : b.status === 'LATE' ? (
+                        <Badge color="amber">3 Days Late</Badge>
+                      ) : b.status === 'PARTIAL' ? (
+                        <Badge color="amber">1 Day Overdue</Badge>
+                      ) : (
+                        <span className="text-[11.5px] text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">On Time</span>
+                      )}
+                    </td>
+                    <td><StatusBadge status={b.status} /></td>
                     <td className="text-right pr-4"><Button size="sm" onClick={() => setActiveBatchId(b.id)}>Review</Button></td>
                   </tr>
                 ))}
@@ -353,7 +376,7 @@ export default function Transactions() {
               <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 border-b border-slate-200">
                 <tr>
                   <th className="px-4 py-3 w-8"><input type="checkbox" checked={selectedRows.length === filteredBudgetRequests.length && filteredBudgetRequests.length > 0} onChange={() => toggleAll(filteredBudgetRequests.map(x=>x.id))} /></th>
-                  <th className="px-4 py-3">Request</th><th className="px-4 py-3">Corporate</th><th className="px-4 py-3 text-right">Current</th><th className="px-4 py-3 text-right">Requested</th><th className="px-4 py-3">Justification</th><th className="px-4 py-3">Risk</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Submitted</th><th className="px-4 py-3 text-right">Action</th>
+                  <th className="px-4 py-3">Request</th><th className="px-4 py-3">Corporate</th><th className="px-4 py-3 text-right">Current</th><th className="px-4 py-3 text-right">Requested</th><th className="px-4 py-3 text-right text-blue-700">Requested Increase</th><th className="px-4 py-3 text-right">Multiplier Factor</th><th className="px-4 py-3">Justification</th><th className="px-4 py-3">Risk</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Submitted</th><th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="text-[12.5px] text-slate-700">
@@ -362,6 +385,8 @@ export default function Transactions() {
                     <td className="px-4"><input type="checkbox" checked={selectedRows.includes(r.id)} onChange={() => toggleRow(r.id)} /></td>
                     <td className="font-mono text-[12px] text-text-dim">{r.id}</td><td>{r.corp}</td>
                     <td className="text-right font-mono text-[12px] text-text-dim">{fmt(r.current)}</td><td className="text-right font-mono text-[12px] text-text-dim">{fmt(r.requested)}</td>
+                    <td className="text-right font-mono text-[12px] font-bold text-blue-600 bg-blue-50/40 px-2">+{fmt(r.requested - r.current)} MMK</td>
+                    <td className="text-right font-mono text-[12px] text-slate-500">{(r.requested / r.current).toFixed(2)}x</td>
                     <td className="text-[11px] text-text-mute">{r.reason}</td><td className="font-mono text-[12px] text-text-dim">{r.risk}</td><td><StatusBadge status={r.status} /></td><td className="font-mono text-[12px] text-text-dim">{r.submitted}</td>
                     <td className="flex gap-1.5 justify-end pr-4">
                       {r.status === 'PENDING_RISK' ? (

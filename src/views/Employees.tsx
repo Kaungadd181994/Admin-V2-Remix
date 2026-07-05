@@ -282,12 +282,13 @@ export default function Employees({ params }: { params?: { employeeId?: string }
               <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 border-b border-slate-200">
                 <tr>
                   <th className="px-4 py-3 w-8"><input type="checkbox" checked={selectedEmps.length === filteredEmps.length && filteredEmps.length > 0} onChange={() => toggleAllEmps(filteredEmps.map(x=>x.id))} /></th>
-                  <th className="px-4 py-3">Employee</th><th className="px-4 py-3">Company</th><th className="px-4 py-3">Dept</th><th className="px-4 py-3 text-right">Salary</th><th className="px-4 py-3">KYC (L1)</th><th className="px-4 py-3">Whitelist (L2)</th><th className="px-4 py-3 text-right">Outstanding</th><th className="px-4 py-3 text-right">Cap</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Reason</th><th className="px-4 py-3 text-right">Action</th>
+                  <th className="px-4 py-3">Employee</th><th className="px-4 py-3">Company</th><th className="px-4 py-3">Dept</th><th className="px-4 py-3 text-right">Salary</th><th className="px-4 py-3">KYC (L1)</th><th className="px-4 py-3">Whitelist (L2)</th><th className="px-4 py-3 text-right">Outstanding</th><th className="px-4 py-3 text-right">Cap</th><th className="px-4 py-3 text-right text-emerald-700">Available Bal</th><th className="px-4 py-3">Bank Account</th><th className="px-4 py-3">Last Sync</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Reason</th><th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="text-[12.5px] text-slate-700">
                 {filteredEmps.map(e => {
                   const company = data.companies.find(c => c.id === e.company);
+                  const availableBal = e.cap - e.outstanding;
                   return (
                     <tr key={e.id} className={selectedEmps.includes(e.id) ? 'bg-blue-50/50' : ''}>
                       <td className="px-4"><input type="checkbox" checked={selectedEmps.includes(e.id)} onChange={() => toggleEmp(e.id)} /></td>
@@ -299,6 +300,9 @@ export default function Employees({ params }: { params?: { employeeId?: string }
                       <td><Toggle isOn={e.whitelist} onToggle={() => toggleWhitelist(e.id)} /></td>
                       <td className="text-right font-mono text-[12px] text-text-dim">{fmt(e.outstanding)}</td>
                       <td className="text-right font-mono text-[12px] text-text-dim">{fmt(e.cap)}</td>
+                      <td className="text-right font-mono text-[12px] font-semibold text-emerald-600 bg-emerald-50/30 px-2">{fmt(availableBal)}</td>
+                      <td className="font-medium text-slate-600">{e.bank}</td>
+                      <td className="text-slate-400 text-xs font-mono">{e.lastSync}</td>
                       <td><StatusBadge status={e.status} /></td>
                       <td className="text-[11px] text-text-mute">{e.reason}</td>
                       <td className="text-right pr-4">

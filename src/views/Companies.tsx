@@ -461,7 +461,7 @@ export default function Companies({ params }: { params?: { companyId?: string } 
                   <th className="px-4 py-3 w-8"><input type="checkbox" checked={selectedRows.length === filtered.length && filtered.length > 0} onChange={() => toggleAll(filtered.map(x=>x.id))} /></th>
                   <th className="px-4 py-3">Corporate ID &amp; Name</th><th className="px-4 py-3">Type</th><th className="px-4 py-3 text-right">Total Limit</th><th className="px-4 py-3 text-right">Utilized</th>
                   <th className="px-4 py-3 text-right">Available</th><th className="px-4 py-3">Payout Day</th><th className="px-4 py-3">Due Day</th><th className="px-4 py-3">Grace</th><th className="px-4 py-3">Late Fee %</th>
-                  <th className="px-4 py-3">Tier</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Last Audit</th><th className="px-4 py-3 text-right">Action</th>
+                  <th className="px-4 py-3">Tier &amp; Score</th><th className="px-4 py-3">Cap Strategy</th><th className="px-4 py-3">Accrual Mode</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Last Audit</th><th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="text-[12.5px] text-slate-700">
@@ -477,7 +477,36 @@ export default function Companies({ params }: { params?: { companyId?: string } 
                     <td className="font-mono text-[12px] text-text-dim">{c.dueDay!=='-'?'Day '+c.dueDay:'—'}</td>
                     <td className="font-mono text-[12px] text-text-dim">{c.grace!=='-'?c.grace+' Days':'—'}</td>
                     <td className="font-mono text-[12px] text-text-dim">{c.lateFee!=='-'?c.lateFee+'%':'—'}</td>
-                    <td>{c.tier!=='-'?<Badge color={{A:'green',B:'blue',C:'grey',D:'amber',E:'red'}[c.tier]||'grey'}>Tier {c.tier}</Badge>:'—'}</td>
+                    <td>
+                      <div className="flex items-center gap-1.5">
+                        {c.tier !== '-' ? <Badge color={({ A: 'green', B: 'blue', C: 'grey', D: 'amber', E: 'red' } as any)[c.tier] || 'grey'}>Tier {c.tier}</Badge> : '—'}
+                        {c.score > 0 && (
+                          <span className={`text-[10.5px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                            c.score >= 80 ? 'bg-green-50 text-green-700 border border-green-100' :
+                            c.score >= 60 ? 'bg-blue-50 text-blue-700 border border-blue-100' :
+                            c.score >= 40 ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                            'bg-red-50 text-red-700 border border-red-100'
+                          }`}>
+                            {c.score}/100
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="text-xs text-slate-600">
+                      {c.capType !== '-' ? (
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-800">{c.capValue}</span>
+                          <span className="text-[9px] text-slate-400 uppercase font-mono">{c.capType}</span>
+                        </div>
+                      ) : '—'}
+                    </td>
+                    <td className="text-xs">
+                      {c.accrual !== '-' ? (
+                        <Badge color={c.accrual === 'SIMPLE_DAILY' ? 'blue' : 'amber'}>
+                          {c.accrual === 'SIMPLE_DAILY' ? 'Simple Daily' : 'Compound Daily'}
+                        </Badge>
+                      ) : '—'}
+                    </td>
                     <td><StatusBadge status={c.status} /></td>
                     <td className="font-mono text-[12px] text-text-dim">{c.lastAudit}</td>
                     <td className="text-right pr-4">
