@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-bg: #f8fafc;
+  --color-panel: #ffffff;
+  --color-panel-2: #f1f5f9;
+  --color-panel-3: #e2e8f0;
+  --color-line: #cbd5e1;
+  --color-line-soft: #e2e8f0;
+  --color-primary: #0f172a;
+  --color-primary-2: #1e293b;
+  --color-primary-glow: rgba(15,23,42,.1);
+  --color-text-main: #020617;
+  --color-text-dim: #334155;
+  --color-text-mute: #64748b;
+  
+  --color-success: #059669;
+  --color-success-bg: #d1fae5;
+  --color-warning: #ea580c;
+  --color-warning-bg: #ffedd5;
+  --color-critical: #e11d48;
+  --color-critical-bg: #ffe4e6;
+  --color-info: #0284c7;
+  --color-info-bg: #e0f2fe;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-main);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 0; }
+::-webkit-scrollbar-track { background: transparent; }
+
+table.dt { border-collapse: collapse; width: 100%; white-space: nowrap; font-size: 12px; }
+table.dt th {
+  text-align: left; padding: 6px 10px; background: var(--color-panel-2);
+  color: var(--color-text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+  border-bottom: 1px solid var(--color-line); position: sticky; top: 0; font-weight: 700; z-index: 10;
+}
+table.dt td { padding: 6px 10px; border-bottom: 1px solid var(--color-line-soft); color: var(--color-text-main); height: 32px; }
+table.dt tbody tr:hover { background: var(--color-panel-2); }
+
+@keyframes pulseDot {
+  0% { box-shadow: 0 0 0 0 rgba(14,157,99,.45); }
+  70% { box-shadow: 0 0 0 6px rgba(14,157,99,0); }
+  100% { box-shadow: 0 0 0 0 rgba(14,157,99,0); }
+}
+.animate-pulse-dot { animation: pulseDot 1.8s infinite; }
+@keyframes toastIn { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.animate-toast-in { animation: toastIn 0.16s ease; }
+@keyframes popIn { from { transform: scale(.97); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.animate-pop-in { animation: popIn 0.16s ease; }
+@keyframes slideIn { from { transform: translateX(24px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.animate-slide-in { animation: slideIn 0.18s ease; }

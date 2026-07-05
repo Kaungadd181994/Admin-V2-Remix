@@ -1,0 +1,8 @@
+{
+  "name": "Remix: EWA Admin Portal",
+  "description": "Interactive functional prototype for the Earned Wage Access admin portal with mock data and full workflow simulation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
